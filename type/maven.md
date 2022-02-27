@@ -156,37 +156,34 @@
 
 1. clean 的生命周期目的是清理项目，又包含以下三个阶段。
 
-   1.1 pre-clean：执行清理前需要完成的工作。
-
-   1.2 clean：清理上一次构建生成的文件。
-
-   1.3 post-clean：执行一些清理后需要完成的工作。
+   | 阶段       | 说明                         |
+| ---------- | ---------------------------- |
+   | pre-clean  | 执行清理前需要完成的工作     |
+| clean      | 清理上一次构建生成的文件     |
+   | post-clean | 执行一些清理后需要完成的工作 |
 
 2. default生命周期定义了真正构建时需要执行的所有步骤，是核心部分，以下列举default中主要的步骤。
 
-   2.1 process-sources：处理项目主资源文件。一般来说，是对src/main/resources目录的 内容进行变量替换等工	  作后，复制到项目输出的主classpath目录中。
+   | 阶段                 | 说明                                                         |
+   | :------------------- | :----------------------------------------------------------- |
+   | process-sources      | 处理项目主资源文件。一般来说，是对src/main/resources目录的 内容进行变量替换等工	  作后，复制到项目输出的主classpath目录中 |
+   | process-test-sources | 处理项目测试资源文件。一般来说，是对src/test/resources目 录的内容进行变量替换	  等工作后，复制到项目输出的测试classpath目录中 |
+   | compile              | 编译项目的主源码。一般来说，是编译src/main/java目录下的Java文件至 项目输出的主classpath目录中 |
+   | test-compile         | 编译项目的测试代码。一般来说，是编译src/test/java目录下的Java 文件至项目输出的测试		classpath目录中 |
+   | test                 | 使用单元测试框架运行测试，测试代码不会被打包或部署           |
+   | package              | 接受编译好的代码，打包成可发布的格式，如JAR                  |
+   | install              | 将包安装到Maven本地仓库，供本地其他Maven项目使用             |
+   | deploy               | 将最终的包复制到远程仓库，供其他开发人员和Maven项目使用      |
+   
+   
+   
+3. site生命周期的目的是建立和发布项目站点，Maven能够基于POM所包含的信 息，自动生成一个友好的站点，方便团队交流和发布项目信息。该生命周期包含如 下阶段：
 
-   2.2 process-test-sources：处理项目测试资源文件。一般来说，是对src/test/resources目 录的内容进行变量替换	  等工作后，复制到项目输出的测试classpath目录中。
-
-   2.3 compile：编译项目的主源码。一般来说，是编译src/main/java目录下的Java文件至 项目输出的主classpath	  目录中。
-
-   2.4 test-compile：编译项目的测试代码。一般来说，是编译src/test/java目录下的Java 文件至项目输出的测试		classpath目录中。
-
-   2.5 test：使用单元测试框架运行测试，测试代码不会被打包或部署。
-
-   2.6 package：接受编译好的代码，打包成可发布的格式，如JAR。
-
-   2.7 install：将包安装到Maven本地仓库，供本地其他Maven项目使用。 
-
-   2.8 deploy：将最终的包复制到远程仓库，供其他开发人员和Maven项目使用。
-
-3. site生命周期的目的是建立和发布项目站点，Maven能够基于POM所包含的信 息，自动生成一个友好的站点，方便团队交流和发布项目信息。该生命周期包含如 下阶段： 
-
-   3.1 pre-site：执行一些在生成项目站点之前需要完成的工作。 
-
-   3.2 site：生成项目站点文档。 
-
-   3.3 post-site：执行一些在生成项目站点之后需要完成的工作。 ·site-deploy将生成的项目站点发布到服务器上。
+   | 阶段      | 说明                                                         |
+   | --------- | ------------------------------------------------------------ |
+   | pre-site  | 执行一些在生成项目站点之前需要完成的工作                     |
+   | site      | 生成项目站点文档                                             |
+   | post-site | 执行一些在生成项目站点之后需要完成的工作。 ·site-deploy将生成的项目站点发布到服务器上 |
 
 #### 	**3.2 命令行与生命周期**
 
@@ -218,6 +215,33 @@ Maven的核心仅仅定义了抽象的生命周期，具体的任务是交由插
 | install               | maven-install-plugin:install         | 构件安装到本地仓库             |
 | deploy                | maven-deploy-plugin:deploy           | 构件安装到远程仓库             |
 
+#### **3.5 插件配置**
 
+1. 命令行中插件配置
 
-​		
+   在maven命令中使用-D参数，并跟随一个参数键=参数值的形势，来配置插件的使用目标。如下，在执行命令时会跳过测试步骤。
+
+   ```yaml
+   mvn install -Dmaven.test.skip=true
+   ```
+
+2. POM中插件任务配置 
+
+   不是所有的插件参数都适合从命令行配置，有些参数的值从项目创建到项目发布都不会改变或者很少改变，这种情况在POM文件中一次性配置就显 然比重复在命令行输入要方便，可以在声明插件的时候，对此插件进行一个全局的配置，所有该基于该插件目标的任务，都会使用这些配置。例如，需要配置mavencompiler-plugin告诉它编译Java 1.8版本的源文件，生成与JVM 1.8兼容的字节码文件。
+
+   ```xml
+   <build>
+   	<plugins>
+       <plugin>
+       	<groupId>org.apache.maven.plugins</groupId>
+         <artifactId>maven-compiler-plugin</artifactId>
+         <version>2.1<\version>
+         <configuration>
+         	<source>1.8</source>
+           <target>1.8</target>
+         </configuration>
+       </plugin>
+     </plugins>
+   </build> 		
+   ```
+
